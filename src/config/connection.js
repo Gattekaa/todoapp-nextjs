@@ -4,7 +4,7 @@ import { parseCookies } from 'nookies'
 const { token } = parseCookies()
 
 const connection = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: 'https://todoapp-nextjs-amber.vercel.app/api',
 })
 
 
