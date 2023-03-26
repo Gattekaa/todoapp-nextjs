@@ -10,8 +10,8 @@ import Head from "next/head";
 export default function Login() {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState({
-    username: "gatteka",
-    password: "vinigm123",
+    username: "",
+    password: "",
   });
 
   const { signIn } = useContext(AuthContext);
