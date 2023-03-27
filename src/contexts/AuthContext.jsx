@@ -5,7 +5,7 @@ import Router from "next/router";
 import connection from "@/config/connection";
 import { NextResponse, NextRequest } from 'next/server'
 
-//import { toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 export const AuthContext = createContext({})
 
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
             Router.push('/')
 
         }catch({response: {data: {message}}}) {
-            /* toast.error(message, {
+            toast.error(message, {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
                 draggable: true,
                 progress: undefined,
                 theme: "dark",
-            }); */
+            });
         }
     }
 
@@ -76,7 +76,7 @@ export function AuthProvider({ children }) {
             Router.push('/')
 
         }catch({response: {data: {message}}}) {
-            /* toast.error(message, {
+            toast.error(message, {
                 position: "top-right",
                 autoClose: 5000,
                 hideProgressBar: false,
@@ -85,7 +85,7 @@ export function AuthProvider({ children }) {
                 draggable: true,
                 progress: undefined,
                 theme: "dark",
-            }); */
+            });
         }
     }
 

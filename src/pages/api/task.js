@@ -1,6 +1,15 @@
 import Task from "@/model/Task";
+import { Server } from 'Socket.IO'
 
 export default async function handler(req, res) {
+  if (res.socket.server.io) {
+    console.log('Socket is already running')
+  } else {
+    console.log('Socket is initializing')
+    const io = new Server(res.socket.server)
+    res.socket.server.io = io
+  }
+  
   if (req.method === "GET" && req.query.id) {
     await getById(req, res);
   } else if (req.method === "GET") {
@@ -12,6 +21,8 @@ export default async function handler(req, res) {
   } else if (req.method === "PATCH") {
     await updateTask(req, res);
   }
+  res.end()
+
 }
 
 export const getById = async (req, res) => {
