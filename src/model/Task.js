@@ -8,12 +8,6 @@ class Task extends Model {
     return "todolist";
   }
 
-  $formatJson(json) {
-    // remove o campo "password" do objeto JSON
-    json = super.$formatJson(json);
-    return json;
-  }
-
   static get relationMappings() {
     return {
       user: {

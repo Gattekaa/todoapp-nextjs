@@ -40,8 +40,8 @@ export default function Home() {
 
   async function getData() {
     if (!user) return;
-    const { data } = await connection.get(`/user/?id=${user.id}`);
-    setTodo(data.tasks);
+    const { data } = await connection.get(`/task/?id=${user.id}`);
+    setTodo(data);
     setLoading(false);
   }
   async function fetchLogout() {
