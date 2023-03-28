@@ -11,9 +11,8 @@ import { BsPencilFill } from "react-icons/bs";
 import { AiOutlineCheck } from "react-icons/ai";
 import { CiLogout } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
-import io from "Socket.IO-client";
-
 import Link from "next/link";
+import { io } from "socket.io-client";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
