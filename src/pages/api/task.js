@@ -1,6 +1,4 @@
 import Task from "@/model/Task";
-import { Server } from 'Socket.IO'
-
 export default async function handler(req, res) {
   
   if (req.method === "GET" && req.query.id) {
