@@ -11,17 +11,17 @@ import { BsPencilFill } from "react-icons/bs";
 import { AiOutlineCheck } from "react-icons/ai";
 import { CiLogout } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
+import io from "Socket.IO-client";
 
 import Link from "next/link";
-import { AnimatedBackgrond } from "@/components/AnimatedBackground";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [todo, setTodo] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [fetch, setFetch] = useState(false)
-
+  const [sfetch, setFetch] = useState(false);
+  let socket = io()
   const { user, destroySession } = useContext(AuthContext);
 
   const initialState = {
@@ -51,7 +51,7 @@ export default function Home() {
   async function fetchDelete(id) {
     try {
       const data = await connection.delete(`/task?id=${id}`);
-      getData();
+      socket.emit('refresh-data')
     } catch (err) {
       console.log(err);
     }
@@ -59,20 +59,19 @@ export default function Home() {
 
   async function fetchUpdate(e, item) {
     e.preventDefault();
-    if(fetch) return
-    setFetch(true)
+    if (sfetch) return;
+    setFetch(true);
 
     try {
       const data = await connection.patch(`/task`, {
         ...item,
         done: !item.done,
       });
-      getData();
+      socket.emit('refresh-data')
       setShowModal(false);
     } catch (err) {
-
     } finally {
-      setFetch(false)
+      setFetch(false);
     }
   }
   async function fetchTitleUpdate(e, item) {
@@ -81,28 +80,26 @@ export default function Home() {
       const data = await connection.patch(`/task`, {
         ...item,
       });
-      getData();
+      socket.emit('refresh-data')
       setShowModal(false);
     } catch (err) {}
   }
 
   async function fetchNewTag(e) {
     e.preventDefault();
-    setFetch(true)
-
+    setFetch(true);
     try {
       const data = await connection.post(`/task/`, {
         id: user.id,
         title: newTag.title,
         description: newTag.description,
       });
+      socket.emit('refresh-data')
     } catch (err) {
       console.log(err);
     } finally {
       setNewTag({ ...initialState });
-      getData();
-      setFetch(false)
-
+      setFetch(false);
     }
   }
 
@@ -149,9 +146,28 @@ export default function Home() {
     );
   };
 
+  const socketInitializer = async () => {
+    await fetch("/api/socket");
+    socket = io();
+    socket.on("get-data", (data) => {
+      getData()
+    });
+  };
+
+
   useEffect(() => {
+    socketInitializer()
     getData();
+
+    return () => {
+      socket.disconnect()
+    }
   }, [user]);
+
+  const handleEmit = () => {
+    return socket.emit('send-message', 'test')
+
+  }
 
   return (
     <>
@@ -187,7 +203,10 @@ export default function Home() {
                     <CiLogout />
                     Logout
                   </button>
-                </ul>
+                  
+                </ul>,
+                      <button onClick={() => handleEmit()}>test</button>
+                
               )}
             </li>
           </nav>
@@ -206,7 +225,7 @@ export default function Home() {
                         type="text"
                         placeholder="Add a tag"
                         required
-                        disabled={fetch}
+                        disabled={sfetch}
                         value={newTag.title}
                         maxLength={80}
                         onChange={(e) =>
@@ -220,7 +239,7 @@ export default function Home() {
                     <button
                       type="submit"
                       form="newTagForm"
-                      disabled={fetch}
+                      disabled={sfetch}
                       className="px-2 py-1 bg-dark-background-light/50 dark:bg-dark-background-primary hover:opacity-60 duration-150"
                     >
                       <IoMdAdd size={20} />
@@ -310,7 +329,7 @@ export default function Home() {
                     <button
                       type="submit"
                       form="newTagForm"
-                      disabled={fetch}
+                      disabled={sfetch}
                       className="px-2 py-1 bg-dark-background-light/50 dark:bg-dark-background-primary hover:opacity-60 duration-150"
                     >
                       <IoMdAdd size={20} />
