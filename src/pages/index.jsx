@@ -12,7 +12,7 @@ import { AiOutlineCheck } from "react-icons/ai";
 import { CiLogout } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
 import Link from "next/link";
-import { io } from "socket.io-client";
+import io from 'Socket.IO-client'
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
