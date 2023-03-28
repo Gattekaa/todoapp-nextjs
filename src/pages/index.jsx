@@ -12,6 +12,12 @@ import { AiOutlineCheck } from "react-icons/ai";
 import { CiLogout } from "react-icons/ci";
 import { IoMdAdd } from "react-icons/io";
 import Link from "next/link";
+import fetchDelete from "@/helpers/fetchDelete";
+import fetchUpdate from "@/helpers/fetchUpdate";
+import fetchNewTag from "@/helpers/fetchNewTag";
+import { fetchTitleUpdate } from "@/helpers/fetchTitleUpdate";
+import getData from "@/helpers/getData";
+import { Navbar } from "@/components/Navbar";
 const { io } = require("socket.io-client");
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +26,7 @@ export default function Home() {
   const [todo, setTodo] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [sfetch, setFetch] = useState(false);
-  let socket = io()
+  let socket = io();
   const { user, destroySession } = useContext(AuthContext);
 
   const initialState = {
@@ -37,70 +43,12 @@ export default function Home() {
     ...initialState,
   });
 
-  async function getData() {
-    if (!user) return;
-    const { data } = await connection.get(`/task/?id=${user.id}`);
-    setTodo(data);
-    setLoading(false);
-  }
   async function fetchLogout() {
     await destroySession();
   }
 
-  async function fetchDelete(id) {
-    try {
-      const data = await connection.delete(`/task?id=${id}`);
-      socket.emit('refresh-data')
-    } catch (err) {
-      console.log(err);
-    }
-  }
 
-  async function fetchUpdate(e, item) {
-    e.preventDefault();
-    if (sfetch) return;
-    setFetch(true);
 
-    try {
-      const data = await connection.patch(`/task`, {
-        ...item,
-        done: !item.done,
-      });
-      socket.emit('refresh-data')
-      setShowModal(false);
-    } catch (err) {
-    } finally {
-      setFetch(false);
-    }
-  }
-  async function fetchTitleUpdate(e, item) {
-    e.preventDefault();
-    try {
-      const data = await connection.patch(`/task`, {
-        ...item,
-      });
-      socket.emit('refresh-data')
-      setShowModal(false);
-    } catch (err) {}
-  }
-
-  async function fetchNewTag(e) {
-    e.preventDefault();
-    setFetch(true);
-    try {
-      const data = await connection.post(`/task/`, {
-        id: user.id,
-        title: newTag.title,
-        description: newTag.description,
-      });
-      socket.emit('refresh-data')
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setNewTag({ ...initialState });
-      setFetch(false);
-    }
-  }
 
   const editModal = () => {
     return (
@@ -109,7 +57,7 @@ export default function Home() {
           <p className="font-bold text-xl">Edit</p>
           <form
             className="px-8 py-10"
-            onSubmit={(e) => fetchTitleUpdate(e, editTag)}
+            onSubmit={(e) => fetchTitleUpdate(e, editTag, socket, setShowModal)}
           >
             <div className="flex flex-col gap-8">
               <input
@@ -149,24 +97,18 @@ export default function Home() {
     await fetch("/api/socket");
     socket = io();
     socket.on("get-data", (data) => {
-      getData()
+      getData(user, setTodo, setLoading);
     });
   };
 
-
   useEffect(() => {
-    socketInitializer()
-    getData();
+    socketInitializer();
+    getData(user, setTodo, setLoading);
 
     return () => {
-      socket.disconnect()
-    }
+      socket.disconnect();
+    };
   }, [user]);
-
-  const handleEmit = () => {
-    return socket.emit('send-message', 'test')
-
-  }
 
   return (
     <>
@@ -179,36 +121,7 @@ export default function Home() {
       {!loading ? (
         <div className="w-screen h-fit min-h-screen max-w-full bg-background-neutral dark:bg-dark-background-neutral scrollbar-hide">
           {showModal && editModal()}
-          <nav className="bg-background-neutral sticky top-[0px] left-0 dark:bg-dark-background-base z-[900] flex items-center justify-around w-full h-[60px]">
-            <h1 className="text-dark-background-base dark:text-dark-typography-base text-xl font-black">
-              TodoApp
-            </h1>
-            <li className="flex gap-8 list-none text-dark-background-base dark:text-dark-typography-base">
-              {!user ? (
-                <>
-                  <ul className=" bg-dark-typography-light dark:bg-dark-border-light py-2 px-4 rounded-xl hover:opacity-60 duration-150">
-                    <Link href={"/login"}>Sign in</Link>
-                  </ul>
-                  <ul className=" bg-dark-typography-light dark:bg-dark-border-light py-2 px-4 rounded-xl hover:opacity-60 duration-150">
-                    <Link href={"/register"}>Sign up</Link>
-                  </ul>
-                </>
-              ) : (
-                <ul className="bg-dark-background-light/50 dark:bg-dark-border-light py-2 px-4 rounded-xl hover:opacity-60 duration-150">
-                  <button
-                    onClick={() => fetchLogout()}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <CiLogout />
-                    Logout
-                  </button>
-                  
-                </ul>,
-                      <button onClick={() => handleEmit()}>test</button>
-                
-              )}
-            </li>
-          </nav>
+          <Navbar />
           <main className="w-full flex justify-center items-center">
             {todo.length ? (
               <div className="flex flex-col  sm:w-full md:w-2/4  z-[100]">
@@ -218,7 +131,7 @@ export default function Home() {
                     <form
                       className="w-full"
                       id="newTagForm"
-                      onSubmit={(e) => fetchNewTag(e)}
+                      onSubmit={(e) => fetchNewTag(e, setFetch, setNewTag, socket, initialState, user, newTag)}
                     >
                       <input
                         type="text"
@@ -260,7 +173,7 @@ export default function Home() {
                               : "transparent",
                             borderColor: item.done ? "transparent" : "",
                           }}
-                          onClick={(e) => fetchUpdate(e, item)}
+                          onClick={(e) => fetchUpdate(e, item, sfetch, setFetch, socket)}
                           className="w-[30px] flex-shrink-0 animate-fade-in h-[30px] rounded-full border-2 border-dark-typography-light hover:opacity-60 duration-150 flex justify-center items-center"
                         >
                           {item.done ? <AiOutlineCheck size={20} /> : null}
@@ -283,7 +196,7 @@ export default function Home() {
                       </div>
                       <div className="flex justify-center items-center gap-2 flex-shrink-0">
                         <button
-                          onClick={() => fetchDelete(item.id)}
+                          onClick={() => fetchDelete(item.id, socket)}
                           className="w-[35px] h-[35px] flex justify-center items-center rounded-full border-2 border-dark-typography-light hover:opacity-60 duration-150"
                         >
                           {<FaTrash size={14} />}
@@ -310,7 +223,7 @@ export default function Home() {
                     <form
                       className="w-full"
                       id="newTagForm"
-                      onSubmit={(e) => fetchNewTag(e)}
+                      onSubmit={(e) => fetchNewTag(e, setFetch, setNewTag, socket, initialState, user, newTag)}
                     >
                       <input
                         type="text"
