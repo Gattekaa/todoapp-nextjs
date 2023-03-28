@@ -1,23 +1,18 @@
 import Head from "next/head";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import styles from "@/styles/Home.module.css";
 import { parseCookies } from "nookies";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "@/contexts/AuthContext";
-import connection from "@/config/connection";
 import { FaTrash } from "react-icons/fa";
 import { BsPencilFill } from "react-icons/bs";
 import { AiOutlineCheck } from "react-icons/ai";
-import { CiLogout } from "react-icons/ci";
-import { IoMdAdd } from "react-icons/io";
-import Link from "next/link";
 import fetchDelete from "@/helpers/fetchDelete";
 import fetchUpdate from "@/helpers/fetchUpdate";
-import fetchNewTag from "@/helpers/fetchNewTag";
-import { fetchTitleUpdate } from "@/helpers/fetchTitleUpdate";
 import getData from "@/helpers/getData";
 import { Navbar } from "@/components/Navbar";
+import { EditModal } from "@/components/EditModal";
+import { AddTag } from "@/components/AddTag";
 const { io } = require("socket.io-client");
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +22,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false);
   const [sfetch, setFetch] = useState(false);
   let socket = io();
-  const { user, destroySession } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   const initialState = {
     id: "",
@@ -42,56 +37,6 @@ export default function Home() {
   const [editTag, setEditTag] = useState({
     ...initialState,
   });
-
-  async function fetchLogout() {
-    await destroySession();
-  }
-
-
-
-
-  const editModal = () => {
-    return (
-      <div className="absolute w-screen h-screen backdrop-blur-[2px] duration-150 z-[1000] flex justify-center items-center">
-        <div className="w-[500px] h-fit rounded-xl px-4 py-10 text-center bg-background-neutral dark:bg-dark-background-base text-dark-background-base dark:text-dark-typography-base">
-          <p className="font-bold text-xl">Edit</p>
-          <form
-            className="px-8 py-10"
-            onSubmit={(e) => fetchTitleUpdate(e, editTag, socket, setShowModal)}
-          >
-            <div className="flex flex-col gap-8">
-              <input
-                type="text"
-                placeholder="Title"
-                value={editTag.title}
-                disabled={loading}
-                required
-                onChange={(e) => {
-                  e.stopPropagation(),
-                    setEditTag({ ...editTag, title: e.target.value });
-                }}
-                className="w-full h-10 px-4 bg-background-neutral dark:bg-dark-background-base border-2 border-dark-background-light/50 dark:border-dark-background-light rounded-xl text-typography-light dark:text-dark-typography-base"
-              />
-              <div className="flex justify-around gap-4">
-                <button className="bg-dark-background-neutral flex-1 py-4 rounded-xl">
-                  Confirm
-                </button>
-                <button
-                  onClick={() => {
-                    setEditTag({ ...editTag, done: !editTag.done }),
-                      setShowModal(false);
-                  }}
-                  className="bg-dark-typography-light/50 flex-1 py-4 rounded-xl"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
 
   const socketInitializer = async () => {
     await fetch("/api/socket");
@@ -120,44 +65,19 @@ export default function Home() {
       </Head>
       {!loading ? (
         <div className="w-screen h-fit min-h-screen max-w-full bg-background-neutral dark:bg-dark-background-neutral scrollbar-hide">
-          {showModal && editModal()}
+          {showModal && EditModal(setEditTag, setShowModal, socket, editTag, loading)}
           <Navbar />
           <main className="w-full flex justify-center items-center">
             {todo.length ? (
               <div className="flex flex-col  sm:w-full md:w-2/4  z-[100]">
-                <div className="flex flex-col  rounded-sm items-center justify-between mt-8 bg-dark-background-light/50 dark:bg-dark-background-primary text-dark-background-base dark:text-dark-typography-base">
-                  <div className="flex gap-4 w-full h-[65px] px-8 py-2 items-center justify-between">
-                    <button className="w-[30px] flex-shrink-0 h-[30px] rounded-full border-2 border-dark-typography-light cursor-default flex justify-center items-center"></button>
-                    <form
-                      className="w-full"
-                      id="newTagForm"
-                      onSubmit={(e) => fetchNewTag(e, setFetch, setNewTag, socket, initialState, user, newTag)}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Add a tag"
-                        required
-                        disabled={sfetch}
-                        value={newTag.title}
-                        maxLength={80}
-                        onChange={(e) =>
-                          setNewTag({ ...newTag, title: e.target.value })
-                        }
-                        className="w-full h-full bg-transparent outline-none placeholder:text-dark-background-base placeholder:dark:text-dark-typography-base"
-                      />
-                    </form>
-                  </div>
-                  <div className="w-full flex justify-end bg-dark-background-light/50 px-8 py-2 dark:bg-dark-border-light">
-                    <button
-                      type="submit"
-                      form="newTagForm"
-                      disabled={sfetch}
-                      className="px-2 py-1 bg-dark-background-light/50 dark:bg-dark-background-primary hover:opacity-60 duration-150"
-                    >
-                      <IoMdAdd size={20} />
-                    </button>
-                  </div>
-                </div>
+                <AddTag
+                  setFetch={setFetch}
+                  setNewTag={setNewTag}
+                  socket={socket}
+                  initialState={initialState}
+                  newTag={newTag}
+                  sfetch={sfetch}
+                />
                 <div className="w-full flex flex-col gap-4 divide-dark-border-light divide-solid my-12">
                   {todo.map((item, index) => (
                     <div
@@ -173,7 +93,9 @@ export default function Home() {
                               : "transparent",
                             borderColor: item.done ? "transparent" : "",
                           }}
-                          onClick={(e) => fetchUpdate(e, item, sfetch, setFetch, socket)}
+                          onClick={(e) =>
+                            fetchUpdate(e, item, sfetch, setFetch, socket)
+                          }
                           className="w-[30px] flex-shrink-0 animate-fade-in h-[30px] rounded-full border-2 border-dark-typography-light hover:opacity-60 duration-150 flex justify-center items-center"
                         >
                           {item.done ? <AiOutlineCheck size={20} /> : null}
@@ -217,37 +139,14 @@ export default function Home() {
               </div>
             ) : (
               <div className="flex flex-col  sm:w-full md:w-2/4">
-                <div className="flex flex-col  rounded-sm items-center justify-between mt-8 bg-dark-background-light/50 dark:bg-dark-background-primary text-dark-background-base dark:text-dark-typography-base">
-                  <div className="flex gap-4 w-full h-[65px] px-8 py-2 items-center justify-between">
-                    <button className="w-[30px] flex-shrink-0 h-[30px] rounded-full border-2 border-dark-typography-light cursor-default flex justify-center items-center"></button>
-                    <form
-                      className="w-full"
-                      id="newTagForm"
-                      onSubmit={(e) => fetchNewTag(e, setFetch, setNewTag, socket, initialState, user, newTag)}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Add a tag"
-                        required
-                        value={newTag.title}
-                        onChange={(e) =>
-                          setNewTag({ ...newTag, title: e.target.value })
-                        }
-                        className="w-full h-full bg-transparent outline-none placeholder:text-dark-background-base placeholder:dark:text-dark-typography-base"
-                      />
-                    </form>
-                  </div>
-                  <div className="w-full flex justify-end bg-dark-background-light/50 px-8 py-2 dark:bg-dark-border-light">
-                    <button
-                      type="submit"
-                      form="newTagForm"
-                      disabled={sfetch}
-                      className="px-2 py-1 bg-dark-background-light/50 dark:bg-dark-background-primary hover:opacity-60 duration-150"
-                    >
-                      <IoMdAdd size={20} />
-                    </button>
-                  </div>
-                </div>
+                <AddTag
+                  setFetch={setFetch}
+                  setNewTag={setNewTag}
+                  socket={socket}
+                  initialState={initialState}
+                  newTag={newTag}
+                  sfetch={sfetch}
+                />
                 <div className="animate-fade-up flex flex-col justify-center items-center py-12 gap-8 text-dark-background-base dark:text-dark-typography-base">
                   <p className="font-bold">
                     Não encontramos nenhuma tarefa ainda.
