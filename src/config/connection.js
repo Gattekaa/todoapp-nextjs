@@ -3,7 +3,7 @@ import { parseCookies } from 'nookies'
 const { token } = parseCookies()
 
 const connection = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: 'https://gattekatodo.vercel.app:3000/api',
 })
 
 
