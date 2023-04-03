@@ -47,11 +47,13 @@ export default function Home() {
   };
 
   useEffect(() => {
-    socketInitializer();
-    getData(user, setTodo, setLoading);
+    //socketInitializer();
+    setInterval(() => {
+      getData(user, setTodo, setLoading);
+    }, 3000)
 
     return () => {
-      socket.disconnect();
+      //socket.disconnect();
     };
   }, [user]);
 
