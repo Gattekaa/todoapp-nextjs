@@ -45,12 +45,13 @@ export const getTask = async (req, res) => {
 };
 
 export const postTask = async (req, res) => {
-  const { id, title, description } = req.body;
+  const { id, title, description, done } = req.body;
   try {
     const data = await Task.query().insert({
       todoappusers_id: id,
       title,
       description,
+      done
     });
     return res.status(200).json(data);
   } catch (err) {
