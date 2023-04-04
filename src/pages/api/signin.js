@@ -7,12 +7,20 @@ const bcrypt = require('bcrypt');
 const db = knex(knexConfig.development);
 const dotenv = require("dotenv");
 dotenv.config();
+import NextCors from 'nextjs-cors'; 
 
 function comparePassword(encriptedPassword, password) {
     return bcrypt.compareSync(`${password}`, `${encriptedPassword}`)
 }
 
 export default async function handler(req, res,) {
+    await NextCors(req, res, {
+        // Options
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+        origin: '*',
+        optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+     });
+     
     const { username, password } = req.body
     if (!username || !password) return res.status(400).json({ message: 'Preencha todos os campos!' })
 
