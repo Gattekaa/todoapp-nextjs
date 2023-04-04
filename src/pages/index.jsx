@@ -21,7 +21,7 @@ export default function Home() {
   const [todo, setTodo] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [sfetch, setFetch] = useState(false);
-  let socket = io();
+  let socket
   const { user } = useContext(AuthContext);
 
   const initialState = {
@@ -39,23 +39,19 @@ export default function Home() {
   });
 
   const socketInitializer = async () => {
-    await fetch("/api/socket");
-    socket = io();
-    socket.on("get-data", (data) => {
-      getData(user, setTodo, setLoading);
-    });
+    //await fetch("/api/socket");
   };
 
   useEffect(() => {
     //socketInitializer();
-    setInterval(() => {
+    const getTasks = setInterval(() => {
       getData(user, setTodo, setLoading);
     }, 3000)
 
     return () => {
-      //socket.disconnect();
+      clearInterval(getTasks);
     };
-  }, [user]);
+  }, [user?.id]);
 
   return (
     <>

@@ -10,6 +10,7 @@ function generateHash(password) {
 }
 
 export default async function handler(req, res) {
+  if(!req.headers.authorization) return res.status(401).json({message: 'Unauthorized'})
   await NextCors(req, res, {
     // Options
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],

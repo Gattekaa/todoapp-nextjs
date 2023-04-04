@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
             const data = connection.get('/isexpired').then(() => {
                 if(!user) {
                     const {user} = jwt.decode(token, process.env.SECRET)
+                    connection.defaults.headers['Authorization'] = `Bearer ${token}`
                     setUser(user)
                 }
                 return
@@ -38,6 +39,7 @@ export function AuthProvider({ children }) {
             setCookie(undefined, 'token', token, {
                 maxAge: 60 * 60 * 1, // 1 hour
             })
+            connection.defaults.headers['Authorization'] = `Bearer ${token}`
             setUser(user)
             Router.push('/')
 
@@ -71,6 +73,7 @@ export function AuthProvider({ children }) {
             setCookie(undefined, 'token', token, {
                 maxAge: 60 * 60 * 1, // 1 hour
             })
+            connection.defaults.headers['Authorization'] = `Bearer ${token}`
             const {user} = jwt.decode(token, process.env.SECRET)
             setUser(user)
             Router.push('/')

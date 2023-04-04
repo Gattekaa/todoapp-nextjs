@@ -24,6 +24,7 @@ export default async function handler(req, res) {
 }
 
 export const getById = async (req, res) => {
+  if(!req.headers.authorization) return res.status(401).json({message: 'Unauthorized'})
   const { id } = req.query;
   if (!id) return res.status(400).json({ message: "'id' não pode ser vazio" });
   try {
